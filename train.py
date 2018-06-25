@@ -2,6 +2,7 @@
 Retrain the YOLO model for your own dataset.
 """
 
+import argparse
 import numpy as np
 import keras.backend as K
 from keras.layers import Input, Lambda
@@ -14,14 +15,26 @@ from yolo3.utils import get_random_data
 
 
 def _main():
-    annotation_path = 'train.txt'
-    log_dir = 'logs/000/'
-    classes_path = 'model_data/voc_classes.txt'
-    anchors_path = 'model_data/yolo_anchors.txt'
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-tp", "--training_data_path", help="training data path")
+    parser.add_argument("-cp", "--classes_path", help="classes path")
+    parser.add_argument("-ap", "--anchors_path", help="anchors path")
+    parser.add_argument("--log_dir", help="log dir")
+    
+    args = parser.parse_args()
+    
+    
+    training_data_path = args.training_data_path or 'train.txt'
+    classes_path = args.classes_path or 'model_data/voc_classes.txt'
+    anchors_path = args.anchors_path or 'model_data/yolo_anchors.txt'
+    log_dir = args.log_dir or 'logs/000/'
+    
     class_names = get_classes(classes_path)
+    print(f'class names : {class_names}')
     num_classes = len(class_names)
     anchors = get_anchors(anchors_path)
-
+    print(f'anchors : {anchors}')
+    
     input_shape = (416,416) # multiple of 32, hw
 
     is_tiny_version = len(anchors)==6 # default setting
@@ -39,7 +52,7 @@ def _main():
     early_stopping = EarlyStopping(monitor='val_loss', min_delta=0, patience=10, verbose=1)
 
     val_split = 0.1
-    with open(annotation_path) as f:
+    with open(training_data_path) as f:
         lines = f.readlines()
     np.random.seed(10101)
     np.random.shuffle(lines)
